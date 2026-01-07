@@ -1,0 +1,36 @@
+name: Upload build artifacts
+ 
+on:
+  workflow_dispatch:
+ 
+jobs:
+  build-test-artifact:
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: actions/checkout@v4
+        uses: actions/checkout@v4
+        with:
+          node-version: 18
+      - name: Cache node modules
+        uses: actions/setup-node@v4
+        with:
+          path: ~/ .npm
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json')}}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install dependencies
+        run: npm ci
+ 
+      - name: Run tests
+        run: npm test -- --watch=false --passWithNoTests
+      - name: Build project
+        run: npm run build
+      - name: Zip build folder
+        run: zip -r react-build.zip build/
+ 
+      - name: Upload zipped build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-build-zip
+          path: react-build.zip
